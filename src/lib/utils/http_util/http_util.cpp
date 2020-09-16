@@ -14,6 +14,8 @@
 #include <botan/internal/stl_util.h>
 #include <sstream>
 
+#include <iostream>
+
 namespace Botan {
 
 namespace HTTP {
@@ -24,17 +26,35 @@ namespace {
 * Connect to a host, write some bytes, then read until the server
 * closes the socket.
 */
-std::string http_transact(const std::string& hostname,
+std::string http_transact(const std::string& socketname,
                           const std::string& message,
                           std::chrono::milliseconds timeout)
    {
    std::unique_ptr<OS::Socket> socket;
 
    const std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();
+   std::string service, hostname;
+
+   std::cout << "Socketname: " << socketname << '\n';
+
+   const auto port_sep = socketname.find(":");
+   if(port_sep == std::string::npos)
+   {
+      service = "http";
+      hostname = socketname;
+   }
+   else
+   {
+      service = socketname.substr(port_sep + 1, std::string::npos);
+      hostname = socketname.substr(0, port_sep);
+   }
+
+   std::cout << "Hostname: " << hostname << '\n';
+   std::cout << "Service: " << service << '\n';
 
    try
       {
-      socket = OS::open_socket(hostname, "http", timeout);
+      socket = OS::open_socket(hostname, service, timeout);
       if(!socket)
          throw Not_Implemented("No socket support enabled in build");
       }
